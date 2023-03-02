@@ -12,6 +12,7 @@ abstract contract Context {
         return msg.data;
     }
 }
+
 library Address {
     function isContract(address account) internal view returns (bool) {
         uint256 size;
@@ -93,6 +94,7 @@ library Address {
         }
     }
 }
+
 interface IERC20 {
     function totalSupply() external view returns (uint256);
 
@@ -122,6 +124,7 @@ interface IERC20 {
         uint256 value
     );
 }
+
 library SafeERC20 {
     using Address for address;
 
@@ -209,13 +212,15 @@ library SafeERC20 {
         }
     }
 }
-contract Smart_Binary is Context {
+
+contract Binary_Land is Context {
     using SafeERC20 for IERC20;
 
     struct Node {
         uint128 NumberOfChildNodeOnLeft;
         uint128 NumberOfChildNodeOnRight;
         uint256 NumberOfBalancedCalculated;
+        uint256 TotalUserRewarded;
         uint256 NumberOfNewBalanced;
         address LeftNode;
         address RightNode;
@@ -224,31 +229,31 @@ contract Smart_Binary is Context {
         bool Status;
     }
     
-    // mapping(address => Node) private _users;
-    mapping(address => Node) public _users;
-    mapping(address => bool) public _oldUsers;
-    // mapping(address => bool) private _oldUsers;
-    address[] public _usersAddresses;
-    // address[] private _usersAddresses;
+    mapping(address => Node) private _users;
+    mapping(address => bool) private _oldUsers;
+    address[] private _usersAddresses;
 
     uint256 private lastRun;
-    address private owner;
-    IERC20 private _tetherToken;
-    uint256 public registrationFee;
-    uint256 public numberOfRegisteredUsersIn_24Hours;
-    uint256 public totalBalance;
+    address public owner;
+    IERC20 public tetherToken;
+    uint256 private registrationFee;
+    uint256 private numberOfRegisteredUsersIn_24Hours;
+    uint256 private totalBalance;
     uint256 private allPayments;
     uint256 private numberOfNewBalanceIn_24Hours;
     uint256 public constMaxBalanceForCalculatedReward;
     
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event UserRegistered(address indexed upLine, address indexed newUser);
+    // event Calculating_Node_Rewards   _In_24_Hours(address indexed caller, )
 
 
-    constructor(address headOfUpline, address tetherToken) {
+    constructor(address headOfUpline, address _tetherToken) {
     // constructor() {
         owner = _msgSender();
         registrationFee = 70 ether;
 
-        _tetherToken = IERC20(tetherToken);
+        tetherToken = IERC20(_tetherToken);
         lastRun = block.timestamp;
         numberOfRegisteredUsersIn_24Hours = 0;
         numberOfNewBalanceIn_24Hours = 0;
@@ -258,6 +263,7 @@ contract Smart_Binary is Context {
             NumberOfChildNodeOnLeft: 0,
             NumberOfChildNodeOnRight: 0,
             NumberOfBalancedCalculated : 0,
+            TotalUserRewarded: 0,
             NumberOfNewBalanced : 0,
             LeftNode: address(0),
             RightNode: address(0),
@@ -268,6 +274,7 @@ contract Smart_Binary is Context {
 
         _usersAddresses.push(headOfUpline);
     }
+
 
     modifier onlyOwner() {
         require(_msgSender() == owner, "Just Owner Can Run This Order!");
@@ -281,6 +288,8 @@ contract Smart_Binary is Context {
             // block.timestamp > lastRun + 1 days,
             "The Calculating_Node_Rewards_In_24_Hours Time Has Not Come"
         );
+
+        require(_users[_msgSender()].NumberOfNewBalanced > 0, "You dont have a balance");
 
         uint256 rewardPerBalanced = Today_Reward_Per_Balance();
         uint256 userReward;
@@ -298,13 +307,17 @@ contract Smart_Binary is Context {
             _users[_usersAddresses[i]].NumberOfBalancedCalculated += _users[_usersAddresses[i]].NumberOfNewBalanced;
             _users[_usersAddresses[i]].NumberOfNewBalanced = 0;
             
-            _tetherToken.safeTransfer(_usersAddresses[i], userReward);
+            if (userReward > 0) {
+                tetherToken.safeTransfer(_usersAddresses[i], userReward);
+                _users[_usersAddresses[i]].TotalUserRewarded += userReward;
+            }
 
         }
 
         lastRun = block.timestamp;
         numberOfRegisteredUsersIn_24Hours = 0;
         numberOfNewBalanceIn_24Hours = 0;
+
     }
 
     function Emergency_72() onlyOwner public {
@@ -314,9 +327,9 @@ contract Smart_Binary is Context {
             "The X_Emergency_72 Time Has Not Come"
         );
 
-        _tetherToken.safeTransfer(
+        tetherToken.safeTransfer(
             owner,
-            _tetherToken.balanceOf(address(this))
+            tetherToken.balanceOf(address(this))
         );
     }
 
@@ -342,7 +355,7 @@ contract Smart_Binary is Context {
         
 
         if (_oldUsers[_msgSender()] == false) {
-            _tetherToken.safeTransferFrom(
+            tetherToken.safeTransferFrom(
                 _msgSender(),
                 address(this),
                 registrationFee
@@ -365,6 +378,7 @@ contract Smart_Binary is Context {
             NumberOfChildNodeOnLeft: 0,
             NumberOfChildNodeOnRight: 0,
             NumberOfBalancedCalculated : 0,
+            TotalUserRewarded: 0,
             NumberOfNewBalanced : 0,
             LeftNode: address(0),
             RightNode: address(0),
@@ -400,9 +414,12 @@ contract Smart_Binary is Context {
                 NumberOfNewBalanced = NumberOfCurrentBalanced - (_users[temp_UplineAddress].NumberOfBalancedCalculated + _users[temp_UplineAddress].NumberOfNewBalanced); // combine the two lline for gas lower
                 
                 if (NumberOfNewBalanced > 0) {
-                    totalBalance += NumberOfNewBalanced;
-                    numberOfNewBalanceIn_24Hours += NumberOfNewBalanced;
                     _users[temp_UplineAddress].NumberOfNewBalanced += NumberOfNewBalanced;
+
+                    if (_users[temp_UplineAddress].NumberOfNewBalanced <= constMaxBalanceForCalculatedReward) {
+                        totalBalance += NumberOfNewBalanced;
+                        numberOfNewBalanceIn_24Hours += NumberOfNewBalanced;
+                    }
                 }
 
                 temp_CurrentAddress = temp_UplineAddress;
@@ -414,6 +431,7 @@ contract Smart_Binary is Context {
         }
 
         _usersAddresses.push(_msgSender());
+        emit UserRegistered(uplineAddress, _msgSender());
     }
 
     function Add_Old_User(address oldUserAddress) public onlyOwner {
@@ -423,56 +441,76 @@ contract Smart_Binary is Context {
         _oldUsers[oldUserAddress] = true;
     }
 
-    function Number_Of_User_Balances_Today(address userAddress) public view returns (uint256){
 
+
+
+
+
+    function Contract_Balance() public view returns (uint256) {
+        return tetherToken.balanceOf(address(this)) ;
+    }
+
+    function User_Balance(address userAddress) public view returns(uint256) {
+        return _users[userAddress].NumberOfNewBalanced + _users[userAddress].NumberOfBalancedCalculated; 
+    } 
+
+    function Today_User_Balance(address userAddress) public view returns(uint256) {
         return _users[userAddress].NumberOfNewBalanced;
     }
 
-    function Today_User_Reward_Amount(address userAddress) public view returns (uint256){
-
-        return Number_Of_User_Balances_Today(userAddress) * Today_Reward_Per_Balance();
-    }
-
-    function Number_Of_Total_Balances_Today() public view returns (uint256){
+    function Today_Total_Balance() public view returns(uint256) {
         return numberOfNewBalanceIn_24Hours;
     }
 
-    function Number_Of_Total_Balances() public view returns (uint256){
-        return totalBalance;
-    }
-
-    function Today_Reward_Per_Balance() public view returns (uint256) {
+    function Today_Reward_Per_Balance() private view returns (uint256) {
         uint256 todayReward;
         if (numberOfNewBalanceIn_24Hours == 0) {
             todayReward = 0;
 
         } else {
-            todayReward = registrationFee * numberOfRegisteredUsersIn_24Hours / numberOfNewBalanceIn_24Hours;
+            todayReward = Contract_Balance() / numberOfNewBalanceIn_24Hours;
         }
 
         return todayReward; 
     }
 
-    function Contract_Balance() public view returns (uint256) {
-        return _tetherToken.balanceOf(address(this)) ;
+    function Today_User_Reward(address userAddress) public view returns(uint256) {
+        return _users[userAddress].TotalUserRewarded;
+    }
+    
+    function User_Upline(address userAddress) public view returns(address) {
+        return _users[userAddress].UplineAddress;
     }
 
-    function Total_Number_Of_Registrations() public view returns (uint256) {
-        return _usersAddresses.length;
-    }
-
-    function SubTree_Of_User(address userAddress) public view returns (address, address){
+    function User_Directs_Address(address userAddress) public view returns (address, address){
         return (
             _users[userAddress].LeftNode,
             _users[userAddress].RightNode
         );
     }
 
-    function Number_Of_User_Nodes(address userAddress) public view returns (uint256, uint256){
-        return (
-            _users[userAddress].NumberOfChildNodeOnLeft,
-            _users[userAddress].NumberOfChildNodeOnRight
+    function Registration_Fee() public view returns(uint256) {
+        return registrationFee;
+    }
+
+    function User_Information(address userAddress) public view returns(Node) {
+        return _users[userAddress];
+    }
+
+    function Total_Number_Of_Registrations() public view returns (uint256) {
+        return _usersAddresses.length;
+    }
+
+
+    // Function to change the owner of the contract
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0), "New owner address cannot be 0x0");
+        require(
+            newOwner != owner,
+            "New owner address cannot be the same as the current owner address"
         );
+        owner = newOwner;
+        emit OwnershipTransferred(owner, newOwner);
     }
 
 
