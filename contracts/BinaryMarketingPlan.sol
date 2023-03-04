@@ -222,6 +222,7 @@ contract Binary_Land is Context {
         uint256 NumberOfBalancedCalculated;
         uint256 TotalUserRewarded;
         uint256 NumberOfNewBalanced;
+        uint256 RewardAmountNotReleased;
         address LeftNode;
         address RightNode;
         address UplineAddress;
@@ -265,8 +266,8 @@ contract Binary_Land is Context {
             NumberOfChildNodeOnRight: 0,
             NumberOfBalancedCalculated : 0,
             TotalUserRewarded: 0,
-            NumberOfNewBalanced : 0,
-            AmountOf
+            NumberOfNewBalanced: 0,
+            RewardAmountNotReleased: 0,
             LeftNode: address(0),
             RightNode: address(0),
             UplineAddress: address(0),
@@ -283,7 +284,7 @@ contract Binary_Land is Context {
         _;
     }
 
-    function Calculating_Node_Rewards_In_24_Hours() public {
+    function Calculating_Rewards_In_24_Hours() public {
 
         require(
             block.timestamp > lastRun + 1 minutes,
@@ -308,9 +309,10 @@ contract Binary_Land is Context {
 
             _users[_usersAddresses[i]].NumberOfBalancedCalculated += _users[_usersAddresses[i]].NumberOfNewBalanced;
             _users[_usersAddresses[i]].NumberOfNewBalanced = 0;
-            
+
             if (userReward > 0) {
-                tetherToken.safeTransfer(_usersAddresses[i], userReward);
+                _users[_usersAddresses[i]].RewardAmountNotReleased += userReward;
+                // tetherToken.safeTransfer(_usersAddresses[i], userReward);
                 _users[_usersAddresses[i]].TotalUserRewarded += userReward;
             }
 
@@ -320,6 +322,18 @@ contract Binary_Land is Context {
         numberOfRegisteredUsersIn_24Hours = 0;
         numberOfNewBalanceIn_24Hours = 0;
 
+    }
+
+    function Withdraw() public {
+
+        require(_users[_msgSender()].RewardAmountNotReleased > 0, "You have not received any award yet");
+        
+        uint256 reward;
+        reward = _users[_msgSender()].RewardAmountNotReleased;
+        _users[_msgSender()].RewardAmountNotReleased = 0;
+
+        tetherToken.safeTransfer(_msgSender(), reward);
+        
     }
 
     function Emergency_72() onlyOwner public {
@@ -382,6 +396,7 @@ contract Binary_Land is Context {
             NumberOfBalancedCalculated : 0,
             TotalUserRewarded: 0,
             NumberOfNewBalanced : 0,
+            RewardAmountNotReleased: 0,
             LeftNode: address(0),
             RightNode: address(0),
             UplineAddress: uplineAddress,
@@ -443,7 +458,6 @@ contract Binary_Land is Context {
         _oldUsers[oldUserAddress] = true;
     }
 
-
     function Contract_Balance() public view returns (uint256) {
         return tetherToken.balanceOf(address(this)) ;
     }
@@ -498,7 +512,6 @@ contract Binary_Land is Context {
     function Total_Number_Of_Registrations() public view returns (uint256) {
         return _usersAddresses.length;
     }
-
 
     // Function to change the owner of the contract
     function transferOwnership(address newOwner) public onlyOwner {
