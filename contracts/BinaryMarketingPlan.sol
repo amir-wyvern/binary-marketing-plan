@@ -257,7 +257,8 @@ contract Binary_Land is Context {
         lastRun = block.timestamp;
         numberOfRegisteredUsersIn_24Hours = 0;
         numberOfNewBalanceIn_24Hours = 0;
-        constMaxBalanceForCalculatedReward = 10;
+        // constMaxBalanceForCalculatedReward = 10;
+        constMaxBalanceForCalculatedReward = 3;
         
         _users[headOfUpline] = Node({
             NumberOfChildNodeOnLeft: 0,
@@ -265,6 +266,7 @@ contract Binary_Land is Context {
             NumberOfBalancedCalculated : 0,
             TotalUserRewarded: 0,
             NumberOfNewBalanced : 0,
+            AmountOf
             LeftNode: address(0),
             RightNode: address(0),
             UplineAddress: address(0),
@@ -442,10 +444,6 @@ contract Binary_Land is Context {
     }
 
 
-
-
-
-
     function Contract_Balance() public view returns (uint256) {
         return tetherToken.balanceOf(address(this)) ;
     }
@@ -493,7 +491,7 @@ contract Binary_Land is Context {
         return registrationFee;
     }
 
-    function User_Information(address userAddress) public view returns(Node) {
+    function User_Information(address userAddress) public view returns(Node memory) {
         return _users[userAddress];
     }
 
