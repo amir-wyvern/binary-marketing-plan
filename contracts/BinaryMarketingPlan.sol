@@ -331,7 +331,7 @@ contract Binary_Land is Context {
     function Emergency_72() onlyOwner public {
         require(
             block.timestamp > lastRun + 3 days,
-            "The X_Emergency_72 Time Has Not Come"
+            "The Emergency_72 Time Has Not Come"
         );
         require(tetherToken.balanceOf(address(this)) > 0 , "contract not have balance");
 
