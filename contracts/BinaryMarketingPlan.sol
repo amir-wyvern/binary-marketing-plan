@@ -230,19 +230,19 @@ contract Binary_Land is Context {
         bool Status;
     }
     
-    mapping(address => Node) private _users;
+    mapping(address => Node) public _users;
     mapping(address => bool) private _oldUsers;
     address[] private _usersAddresses;
 
     uint256 private lastRun;
-    address public owner;
-    IERC20 public tetherToken;
+    address private owner;
+    IERC20 private tetherToken;
     uint256 private registrationFee;
     uint256 private numberOfRegisteredUsersIn_24Hours;
     uint256 private totalBalance;
     uint256 private allPayments;
     uint256 private numberOfNewBalanceIn_24Hours;
-    uint256 public constMaxBalanceForCalculatedReward;
+    uint256 private constMaxBalanceForCalculatedReward;
     
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event UserRegistered(address indexed upLine, address indexed newUser);
@@ -259,7 +259,7 @@ contract Binary_Land is Context {
         numberOfRegisteredUsersIn_24Hours = 0;
         numberOfNewBalanceIn_24Hours = 0;
         // constMaxBalanceForCalculatedReward = 10;
-        constMaxBalanceForCalculatedReward = 3;
+        constMaxBalanceForCalculatedReward = 1;
         
         _users[headOfUpline] = Node({
             NumberOfChildNodeOnLeft: 0,
@@ -292,7 +292,6 @@ contract Binary_Land is Context {
             "The Calculating_Node_Rewards_In_24_Hours Time Has Not Come"
         );
 
-        require(_users[_msgSender()].NumberOfNewBalanced > 0, "You dont have a balance");
 
         uint256 rewardPerBalanced = Today_Reward_Per_Balance();
         uint256 userReward;
@@ -312,8 +311,6 @@ contract Binary_Land is Context {
 
             if (userReward > 0) {
                 _users[_usersAddresses[i]].RewardAmountNotReleased += userReward;
-                // tetherToken.safeTransfer(_usersAddresses[i], userReward);
-                _users[_usersAddresses[i]].TotalUserRewarded += userReward;
             }
 
         }
@@ -330,8 +327,8 @@ contract Binary_Land is Context {
         
         uint256 reward;
         reward = _users[_msgSender()].RewardAmountNotReleased;
+        _users[_msgSender()].TotalUserRewarded += reward;
         _users[_msgSender()].RewardAmountNotReleased = 0;
-
         tetherToken.safeTransfer(_msgSender(), reward);
         
     }
@@ -342,6 +339,7 @@ contract Binary_Land is Context {
             // block.timestamp > lastRun + 3 days,
             "The X_Emergency_72 Time Has Not Come"
         );
+        require(tetherToken.balanceOf(address(this)) > 0 , "contract not have balance");
 
         tetherToken.safeTransfer(
             owner,
@@ -480,13 +478,17 @@ contract Binary_Land is Context {
             todayReward = 0;
 
         } else {
-            todayReward = Contract_Balance() / numberOfNewBalanceIn_24Hours;
+            todayReward = (70 ether) * numberOfRegisteredUsersIn_24Hours / numberOfNewBalanceIn_24Hours;
         }
 
         return todayReward; 
     }
 
     function Today_User_Reward(address userAddress) public view returns(uint256) {
+        return _users[userAddress].RewardAmountNotReleased;
+    }
+    
+    function Total_User_Reward(address userAddress) public view returns(uint256) {
         return _users[userAddress].TotalUserRewarded;
     }
     
@@ -510,19 +512,8 @@ contract Binary_Land is Context {
     }
 
     function Total_Number_Of_Registrations() public view returns (uint256) {
-        return _usersAddresses.length;
+        return _usersAddresses.length - 1;
+        // return _usersAddresses.length;
     }
-
-    // Function to change the owner of the contract
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0), "New owner address cannot be 0x0");
-        require(
-            newOwner != owner,
-            "New owner address cannot be the same as the current owner address"
-        );
-        owner = newOwner;
-        emit OwnershipTransferred(owner, newOwner);
-    }
-
 
 }
