@@ -2,8 +2,8 @@
  *Submitted for verification at BscScan.com on 2022-09-01
 */
 
-// SPDX-License-Identifier: Unlicensed
-pragma solidity ^0.8.7;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.7;
 abstract contract Context {
     function _msgSender() internal view virtual returns (address) {
         return msg.sender;
@@ -466,7 +466,7 @@ contract Binary_Land is Context {
         return numberOfNewBalanceIn_24Hours;
     }
 
-    function Today_Reward_Per_Balance() private view returns (uint256) {
+    function Today_Reward_Per_Balance() public view returns (uint256) {
         uint256 todayReward;
         if (numberOfNewBalanceIn_24Hours == 0) {
             todayReward = 0;
