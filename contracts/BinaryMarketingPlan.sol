@@ -230,7 +230,7 @@ contract Binary_Land is Context {
         bool Status;
     }
     
-    mapping(address => Node) public _users;
+    mapping(address => Node) private _users;
     mapping(address => bool) private _oldUsers;
     address[] private _usersAddresses;
 
@@ -244,13 +244,10 @@ contract Binary_Land is Context {
     uint256 private numberOfNewBalanceIn_24Hours;
     uint256 private constMaxBalanceForCalculatedReward;
     
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event UserRegistered(address indexed upLine, address indexed newUser);
-    // event Calculating_Node_Rewards   _In_24_Hours(address indexed caller, )
 
 
     constructor(address headOfUpline, address _tetherToken) {
-    // constructor() {
         owner = _msgSender();
         registrationFee = 70 ether;
 
@@ -258,8 +255,7 @@ contract Binary_Land is Context {
         lastRun = block.timestamp;
         numberOfRegisteredUsersIn_24Hours = 0;
         numberOfNewBalanceIn_24Hours = 0;
-        // constMaxBalanceForCalculatedReward = 10;
-        constMaxBalanceForCalculatedReward = 1;
+        constMaxBalanceForCalculatedReward = 10;
         
         _users[headOfUpline] = Node({
             NumberOfChildNodeOnLeft: 0,
@@ -287,8 +283,7 @@ contract Binary_Land is Context {
     function Calculating_Rewards_In_24_Hours() public {
 
         require(
-            block.timestamp > lastRun + 1 minutes,
-            // block.timestamp > lastRun + 1 days,
+            block.timestamp > lastRun + 1 days,
             "The Calculating_Node_Rewards_In_24_Hours Time Has Not Come"
         );
 
@@ -335,8 +330,7 @@ contract Binary_Land is Context {
 
     function Emergency_72() onlyOwner public {
         require(
-            block.timestamp > lastRun + 3 minutes,
-            // block.timestamp > lastRun + 3 days,
+            block.timestamp > lastRun + 3 days,
             "The X_Emergency_72 Time Has Not Come"
         );
         require(tetherToken.balanceOf(address(this)) > 0 , "contract not have balance");
@@ -513,7 +507,6 @@ contract Binary_Land is Context {
 
     function Total_Number_Of_Registrations() public view returns (uint256) {
         return _usersAddresses.length - 1;
-        // return _usersAddresses.length;
     }
 
 }
