@@ -255,7 +255,8 @@ contract Binary_Land is Context {
         lastRun = block.timestamp;
         numberOfRegisteredUsersIn_24Hours = 0;
         numberOfNewBalanceIn_24Hours = 0;
-        constMaxBalanceForCalculatedReward = 10;
+        constMaxBalanceForCalculatedReward = 8  
+        ;
         
         _users[headOfUpline] = Node({
             NumberOfChildNodeOnLeft: 0,
@@ -328,7 +329,7 @@ contract Binary_Land is Context {
         
     }
 
-    function Emergency_72() onlyOwner public {
+    function X_Emergency_72() onlyOwner public {
         require(
             block.timestamp > lastRun + 3 days,
             "The Emergency_72 Time Has Not Come"
@@ -450,13 +451,16 @@ contract Binary_Land is Context {
         _oldUsers[oldUserAddress] = true;
     }
 
-    function Contract_Balance() public view returns (uint256) {
-        return tetherToken.balanceOf(address(this)) ;
+    function Today_Contract_Balance() public view returns (uint256) {
+        return (70 ether) * numberOfRegisteredUsersIn_24Hours;
     }
 
-    function User_Balance(address userAddress) public view returns(uint256) {
-        return _users[userAddress].NumberOfNewBalanced + _users[userAddress].NumberOfBalancedCalculated; 
-    } 
+    function All_Time_User_Left_Right(address userAddress) public view returns(uint128 ,uint128) {
+        return (
+            _users[userAddress].NumberOfChildNodeOnLeft,
+            _users[userAddress].NumberOfChildNodeOnRight
+        );
+    }
 
     function Today_User_Balance(address userAddress) public view returns(uint256) {
         return _users[userAddress].NumberOfNewBalanced;
@@ -478,7 +482,7 @@ contract Binary_Land is Context {
         return todayReward; 
     }
 
-    function Today_User_Reward(address userAddress) public view returns(uint256) {
+    function Reward_Amount_Not_Released(address userAddress) public view returns(uint256) {
         return _users[userAddress].RewardAmountNotReleased;
     }
     
