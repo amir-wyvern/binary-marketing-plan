@@ -317,7 +317,7 @@ contract Binary_Land is Context {
 
     }
 
-    function Withdraw() public {
+    function B_Withdraw() public {
 
         require(_users[_msgSender()].RewardAmountNotReleased > 0, "You have not received any award yet");
         
@@ -329,7 +329,7 @@ contract Binary_Land is Context {
         
     }
 
-    function X_Emergency_72() onlyOwner public {
+    function Emergency_72() onlyOwner public {
         require(
             block.timestamp > lastRun + 3 days,
             "The Emergency_72 Time Has Not Come"
@@ -342,7 +342,7 @@ contract Binary_Land is Context {
         );
     }
 
-    function Register(address uplineAddress) public {
+    function A_Register(address uplineAddress) public {
         require(
             _users[uplineAddress].LeftNode == address(0) || _users[uplineAddress].RightNode == address(0) ,
             "This address have two directs and could not accept new members!"
@@ -444,7 +444,7 @@ contract Binary_Land is Context {
         emit UserRegistered(uplineAddress, _msgSender());
     }
 
-    function Add_Old_User(address oldUserAddress) public onlyOwner {
+    function Upload_Old_User(address oldUserAddress) public onlyOwner {
         require(_users[oldUserAddress].Status == false , "This address is already registered!");
         require(_oldUsers[oldUserAddress] == false, "This address is already registered in old user list!");
 
